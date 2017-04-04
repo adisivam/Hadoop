@@ -13,6 +13,9 @@ sqoop job --create customer_job -- import \
 --table customer --target-dir "/kesav/sqoop_test/customer" \
 --append -m 1 --as-parquetfile --incremental append --check-column "modified_date" --last-value "2017-03-31 04:22:24.0"
 
+--Hive import
+sqoop import --connect "jdbc:mysql://quickstart.cloudera:3306/abbvie" --username root --password cloudera --table customer --hive-import --hive-table customer --create-hive-table --as-parquetfile --map-column-hive created_date=STRING,modified_date=STRING --incremental append --check-column "modified_date" --last-value "2017-03-31 04:22:24.0"
+
 --MySQL Table
 
 CREATE TABLE customer
