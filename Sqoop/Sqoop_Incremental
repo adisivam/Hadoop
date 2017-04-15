@@ -1,0 +1,11 @@
+--Incremental Load (lastmodified)
+
+--Target File
+sqoop import --connect "jdbc:mysql://quickstart.cloudera:3306/abbvie" --username root --password cloudera --table customer \
+--target-dir "/kesav/sqoop_test/customer_01" -m 1 --as-textfile --incremental lastmodified \
+--check-column "MODIFIED_DATE" --merge-key CUSTOMER_ID
+
+--Hive Table
+sqoop job --create customer_load -- import --connect "jdbc:mysql://quickstart.cloudera:3306/abbvie" \
+--username root --password cloudera --table customer --hive-import --hive-table CUSTOMER_TEMP --compress \
+-m 1 --as-textfile --incremental lastmodified --check-column MODIFIED_DATE --merge-key CUSTOMER_ID
