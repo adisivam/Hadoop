@@ -5,7 +5,16 @@ sqoop import --connect "jdbc:mysql://quickstart.cloudera:3306/abbvie" --username
 --target-dir "/kesav/sqoop_test/customer_01" -m 1 --as-textfile --incremental lastmodified \
 --check-column "MODIFIED_DATE" --merge-key CUSTOMER_ID
 
+--Step 1
 --Hive Table
 sqoop job --create customer_load -- import --connect "jdbc:mysql://quickstart.cloudera:3306/abbvie" \
 --username root --password cloudera --table customer --hive-import --hive-table CUSTOMER_TEMP --compress \
 -m 1 --as-textfile --incremental lastmodified --check-column MODIFIED_DATE --merge-key CUSTOMER_ID
+
+--Step 2
+--View Creation
+CREATE TABLE CUSTOMER_VW AS 
+SELECT A.* FROM CUSTOMER_TEMP A INNER JOIN
+(SELECT CUSTOMER_ID, MAX(MODIFIED_DATE) AS MOD_DATE FROM CUSTOMER_TEMP GROUP BY CUSTOMER_ID) B
+ON A.CUSTOMER_ID = B.CUSTOMER_ID
+AND A.MODIFIED_DATE = B.MOD_DATE
