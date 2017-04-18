@@ -12,12 +12,22 @@ sqoop job --create customer_load -- import --connect "jdbc:mysql://quickstart.cl
 -m 1 --as-textfile --incremental lastmodified --check-column MODIFIED_DATE --merge-key CUSTOMER_ID
 
 --Based on modified date
+--Command
 
 sqoop import -Dhadoop.security.credential.provider.path=jceks://hdfs/keystore/teradatad.password.jceks  \
 --connect "jdbc:teradata://10.72.23.136/DATABASE=DDSVD" \
 --username DDSVAWSSQHUMDLREADD --password-alias teradatad.password.alias \
 --table CUSTOMER_DL --where "MODIFIED_DATE>'2017-01-01 00:00:00'" -m 1 --split-by customer_id \
 --hive-import --hive-table CUSTOMER_DDSD_TEMP \
+--map-column-hive CUSTOMER_ID=STRING 
+
+--Sqoop Job
+
+sqoop job -Dhadoop.security.credential.provider.path=jceks://hdfs/keystore/teradatad.password.jceks --create CUSTOMER_LOAD -- import \
+--connect "jdbc:teradata://10.72.23.136/DATABASE=DDSVD" \
+--username DDSVAWSSQHUMDLREADD --password-alias teradatad.password.alias \
+--table CUSTOMER_DL --where "MODIFIED_DATE>'2017-01-01 00:00:00'" -m 1 --split-by customer_id \
+--hive-import --hive-table CUSTOMER_DDSD_TEMP --COMPRESS \
 --map-column-hive CUSTOMER_ID=STRING 
 
 --Step 2
