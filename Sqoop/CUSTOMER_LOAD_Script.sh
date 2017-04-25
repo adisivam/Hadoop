@@ -145,7 +145,7 @@ else
 		END_TIME=`date +'%Y-%m-%d %H:%M:%S'`
 		STATUS="FAILED"
 		hive -e "insert into ${AUDIT_TABLE} values (${PROCESS_ID},'${PROCESS_DESC}','${JOB_NAME}','${DATA_PROV_NAME}','${DATA_SET}','${SRC_DB}','${HIVEDB}','${SRCTABLE}','${TGTTABLE}','${STRT_TIME}','${END_TIME}',0,${teratotcnt},${teracnt},'${STATUS}','{ERR_DSC}')"
-		exit 0
+		exit 1
 fi
 
 echo -e "\n----- Step 5: Validation Checks and audit table population" | tee -a $logfile
@@ -170,11 +170,8 @@ else
 	ERR_DSC="Error: The count of records in Teradata and Hive is not matching"
 	END_TIME=`date +'%Y-%m-%d %H:%M:%S'`
 	hive -e "insert into ${AUDIT_TABLE} values (${PROCESS_ID},'${PROCESS_DESC}','${JOB_NAME}','${DATA_PROV_NAME}','${DATA_SET}','${SRC_DB}','${HIVEDB}','${SRCTABLE}','${TGTTABLE}','${STRT_TIME}','${END_TIME}',${teracnt},${srctablecnt},${tgtvwcnt},'${STATUS}','{ERR_DSC}')"
-	exit 0
+	exit 1
 fi 
-END_TIME=`date +'%Y-%m-%d %H:%M:%S'`
-STATUS="SUCCEEDED"
-hive -e "insert into ${AUDIT_TABLE} values (${PROCESS_ID},'${PROCESS_DESC}','${JOB_NAME}','${DATA_PROV_NAME}','${DATA_SET}','${SRC_DB}','${HIVEDB}','${SRCTABLE}','${TGTTABLE}','${STRT_TIME}','${END_TIME}',${teracnt},${srctablecnt},${tgtvwcnt},'${STATUS}','')"
 
 echo -e "\n----- Step 5: Final Table Creation Process " | tee -a $logfile
 echo "Dropping ${FNLTABLE} in Hive ..." | tee -a $logfile
@@ -184,14 +181,21 @@ if [ $? == 0 ]; then
 		echo "Creating table ${FNLTABLE} with new dataset" | tee -a $logfile
 		hive -e "create table ${FNLTABLE} as select * from ${TGTVW}"
 		echo "The table ${FNLTABLE} has been re-created successfully" | tee -a $logfile
+		tgtvwcnt=`hive -e "select count(*) from $FNLTABLE"`
 else
-		echo "The table ${FNLTABLE} doesn't exists. Please check the log for more details ..." | tee -a $logfile
-		exit 0
+		ERR_DSC="Error: The table ${FNLTABLE} doesn't get created. Please check the log for more details" 
+		echo "$ERR_DSC" | tee -a $logfile
+		END_TIME=`date +'%Y-%m-%d %H:%M:%S'`
+		STATUS="FAILED"
+		hive -e "insert into ${AUDIT_TABLE} values (${PROCESS_ID},'${PROCESS_DESC}','${JOB_NAME}','${DATA_PROV_NAME}','${DATA_SET}','${SRC_DB}','${HIVEDB}','${SRCTABLE}','${TGTTABLE}','${STRT_TIME}','${END_TIME}',${teracnt},${srctablecnt},${tgtvwcnt},'${STATUS}','')"
+		exit 1
 fi
 
 echo -e "\n----- Step 6: Audit Table Insertion" | tee -a $logfile
-END_TIME=`date +'%Y-%m-%d %H:%M:%S'`
 
+END_TIME=`date +'%Y-%m-%d %H:%M:%S'`
+STATUS="SUCCEEDED"
+hive -e "insert into ${AUDIT_TABLE} values (${PROCESS_ID},'${PROCESS_DESC}','${JOB_NAME}','${DATA_PROV_NAME}','${DATA_SET}','${SRC_DB}','${HIVEDB}','${SRCTABLE}','${TGTTABLE}','${STRT_TIME}','${END_TIME}',${teracnt},${srctablecnt},${tgtvwcnt},'${STATUS}','')"
 
 echo -e "\n--------------------------------------------------------------" | tee -a $logfile
 echo "  Data from $SRCTABLE has been imported successfully to $FNLTABLE" | tee -a $logfile
